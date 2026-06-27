@@ -1,7 +1,10 @@
 import telebot
 import requests
 import time
+import os
+import threading
 from collections import defaultdict
+from flask import Flask, jsonify
 
 BOT_TOKEN = "8819036693:AAGq1uJZDxQzJ9PhqazhzOiZl5lxg89hT08"
 OPENROUTER_API_KEY = "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"
@@ -160,5 +163,30 @@ def reply_handler(message):
         bot.reply_to(message, f"Ошибка: {e}")
 
 
-print("Бот запущен 🚀")
-bot.polling()
+# -------------------------
+# FLASK WEB SERVER (for Render)
+# -------------------------
+app = Flask(__name__)
+
+@app.route("/")
+def health():
+    return jsonify({"status": "ok", "bot": "running"})
+
+@app.route("/health")
+def healthcheck():
+    return jsonify({"status": "ok", "bot": "running"})
+
+
+def run_flask():
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, threaded=True)
+
+
+def run_bot():
+    print("Бот запущен 🚀")
+    bot.polling()
+
+
+if __name__ == "__main__":
+    threading.Thread(target=run_flask, daemon=True).start()
+    run_bot()
